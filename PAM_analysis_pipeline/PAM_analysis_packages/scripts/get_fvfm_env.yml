@@ -1,0 +1,8 @@
+name: get_fvfm
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - plantcv
+  - jupyter
