@@ -4,7 +4,7 @@ import os
 import cv2
 import numpy as np
 import pandas as pd
-## from plotnine import ggplot, geom_label, aes, geom_line
+from plotnine import ggplot, geom_label, aes, geom_line
 from plantcv.plantcv import print_image
 from plantcv.plantcv import plot_image
 from plantcv.plantcv import fatal_error
@@ -83,12 +83,12 @@ def analyze_fvfm(fdark, fmin, fmax, mask, bins=256, label="default"):
     max_bin = midpoints[np.argmax(fvfm_hist)]
     
     # Create a dataframe
-    # dataset = pd.DataFrame({'Plant Pixels': fvfm_hist, 'Fv/Fm': midpoints})
+    dataset = pd.DataFrame({'Plant Pixels': fvfm_hist, 'Fv/Fm': midpoints})
     # Make the histogram figure using plotnine
-    # fvfm_hist_fig = (ggplot(data=dataset, mapping=aes(x='Fv/Fm', y='Plant Pixels'))
-    #                  + geom_line(color='green', show_legend=True)
-    #                  + geom_label(label='Peak Bin Value: ' + str(max_bin),
-    #                               x=.15, y=205, size=8, color='green'))
+    fvfm_hist_fig = (ggplot(data=dataset, mapping=aes(x='Fv/Fm', y='Plant Pixels'))
+                     + geom_line(color='green', show_legend=True)
+                     + geom_label(label='Peak Bin Value: ' + str(max_bin),
+                                  x=.15, y=205, size=8, color='green'))
     # analysis_images.append(fvfm_hist_fig)
     # print(f"fvfm_median = {fvfm_median}")
     # print(f"fvfm_max = {max_bin}")
@@ -97,7 +97,7 @@ def analyze_fvfm(fdark, fmin, fmax, mask, bins=256, label="default"):
         print_image(fmin_mask, os.path.join(params.debug_outdir, str(params.device) + '_fmin_mask.png'))
         print_image(fmax_mask, os.path.join(params.debug_outdir, str(params.device) + '_fmax_mask.png'))
         print_image(fv, os.path.join(params.debug_outdir, str(params.device) + '_fv_convert.png'))
-        # fvfm_hist_fig.save(os.path.join(params.debug_outdir, str(params.device) + '_fv_hist.png'), verbose=False)
+        fvfm_hist_fig.save(os.path.join(params.debug_outdir, str(params.device) + '_fv_hist.png'), verbose=False)
     elif params.debug == 'plot':
         plot_image(fmin_mask, cmap='gray')
         plot_image(fmax_mask, cmap='gray')
