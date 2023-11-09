@@ -4,23 +4,21 @@ author: "Chris Stephens"
 date: "2023-02-13"
 output: word_document
 ---
-This document will guide you through the generation of pulse amplitude modulation (PAM) fluorometry analysis data:
+This document will guide you through the pipeline built for the semi-automated extraction of pulse amplitude modulation (PAM) fluorometry data from images generated using the PAM fluorometer:
 
-- Using the Python script *get_fvfm_v1.py* to extract FvFm data from .xpim files generated using the ImagingWin software.
-- Using the ImageJ macros *Contrast_area_quant_directory.txt* and *Contrast_area_quant_files.ijm* to extract plant area data from "contrast" TIF images.
+- Using the Python script *get_fvfm.py* to extract FvFm data from .xpim files generated using the ImagingWin software.
+- Using the ImageJ macro *Contrast_area_quant_directory.txt* to extract plant area data from "contrast" TIF images.
+- Note: a separate set of these scripts exist for the "black plates" - cell culture plates which do not result in internal reflection which may affect photosynthetic area quantification.
 
 ## Imaging 24-well plates to generate .xpim files
 
 _Described previously by Nick. See also "How to use the PAM camera.docx"_
 
-![Layout of ImagingWin software. Note that the screenshot is taken in the "View only" setting, hence the options "New Record" and "Fo, Fm" being greyed out.](./screenshots/Screenshot_8.jpg)
+![*Figure 1:* Layout of ImagingWin software. Note that the screenshot is taken in the "View only" setting, hence the options "New Record" and "Fo, Fm" being greyed out.](./screenshots/Screenshot_8.jpg)
 
 1\. **Check the magnification of the PAM imaging camera**. This is located on the top of the PAM instrument. The magnification settings should be as shown in the image below. Note: this is *very important*, as an incorrect magnification can affect all downstream stages of the data analysis!
 
-``` {r echo = FALSE, fig.cap="Correct magnification settings for the PAM camera"}
-knitr::include_graphics("./screenshots/Screenshot_14.jpg")
-# rotate.image(img, angle = 90, compress=NULL)
-```
+![*Figure 2:* Correct magnification settings for the PAM camera.](./screenshots/Screenshot_14.jpg)
 
 1\. Place the 24-well plates to be imaged in the drawer under the PAM imager laptop (in the microscopy room, 4.302). Leave them in the dark for 15 minutes. There is a notice on the door to the microscopy room: "Plants in dark/PAM imaging". Post this on the outside of the door to notify others that you require the room to stay dark.
 
@@ -54,68 +52,112 @@ knitr::include_graphics("./screenshots/Screenshot_14.jpg")
 
 ## Extract photosynthetic efficiency (Y(II)) data from PIM files
 
-### Step 1: Installation and set-up
+### Part 1: Installation and set-up
 
-This step only has to be carried out the first time you follow this protocol. For repeat use of the pipeline, skip to ~~Step 2~~ Step 1, section 4.
+This step *only has to be carried out the first time you follow this protocol*. For repeat use of the pipeline, skip to ~~Part 2~~.
 
-1\. Install Miniconda. Miniconda can be installed from "https://docs.conda.io/en/latest/miniconda.html". Install the version required for your operating system ("e.g. for Windows, click "Miniconda3 Windows 64-bit").
+1\. Install Git. Go to https://git-scm.com/downloads and click the link for your operating system (e.g. Windows). Select the hyperlink at "Click here to download the latest...", to get the most up to date version. Select the recommended settings for the installation.
 
-2\. Copy the "PAM_analysis_packages" folder to your local drive. This folder can be found at *\\sofs2.uni-koeln.de\\agzuccaro\\PAM_analysis_pipeline*.
+2\. Once installed, open Git bash (use the Windows search bar to find the program). This is the terminal for Git and should look similar to a regular Terminal/Command Prompt (see Figure 3). Now install "micromamba" (an "environment manager" program) by entering the following command:
 
-3\. Open Anaconda Prompt (miniconda3). This should be available once Miniconda is installed. Use the Windows search bar to find the program.
+```
+"${SHELL}" <(curl -L micro.mamba.pm/install.sh)
+```
 
-![Anaconda Prompt looks very similar to regular Command Prompt for Windows. One difference is it runs within an environment. The default environment is known as 'base'.](./screenshots/Screenshot_12.jpg)
+- Note: you can check that micromamba is correctly installed by printing the micromamba help window using the ```micromamba -h``` command. 
+- Note: Important commands for navigating in Git bash include "```pwd```" (provide working directory; the path to where you are currently located), "```dir```" (print the contents of your current location) and "```cd```" (change directory). To go "up" in the path from your current location, use "```cd ..```".
 
-4\. Navigate to the location where you have copied the "PAM_analysis_packages" folder. The easiest way to do this is to navigate to the correct folder using Windows File Explorer, then right click on the top banner and select "Copy address as text".
+3\. Next, in Git bash create a new environment in which to run the "PAM_analysis_packages" scripts. The following command will generate an empty environment called "get_fvfm":
 
-![Copy the location of the "PAM_analysis_packages" folder.](./screenshots/Screenshot_1.jpg)
+```
+micromamba create -n get_fvfm
+```
 
- Then, in Anaconda Prompt, enter "cd " then the location of the folder by pasting ('Ctrl' + 'v'):
+- Note: You can check which environments you have available using the command ```micromamba env list``` in Git bash
+
+4\. To edit the new "get_fvfm" environment we must first activate it:
+
+```
+micromamba activate get_fvfm
+```
+
+- After entering this command, the name of the active environment should appear above the command line (see Figure 3). Now, install the plantcv package into this environment:
+
+```
+micromamba install plantcv=4.0.1 -c conda-forge
+```
+
+- This installs the specific version of Plantcv (v4.0.1), and prompts micromamba to look for the package in the channel "conda-forge". After installation is complete, you may run the command ```micromamba list -n get_fvfm``` and check the version of plantcv in the list of installed programs.
+
+
+
+![*Figure 3:* Gitbash looks very similar to regular Command Prompt for Windows. One difference is it runs within an environment. The default environment is known as 'base'.](./screenshots/Screenshot_15.jpg)
+
+### Step 2: Loading the "get_fvfm" environment and running "get_fvfm.py" to obtain FvFm values
+
+1\. If you have not done so already (following protocol above), open Gitbash and activate the "get_fvfm" environment:
+
+```
+micromamba activate get_fvfm
+```
+
+2\. In Windows File Explorer, copy the "PAM_analysis_packages" folder to a folder in your computer. This folder can be found at *\\sofs2.uni-koeln.de\\agzuccaro\\PAM_analysis_pipeline*. 
+
+- Note: The script will run faster if you copy the folder to your local computer and run it there, rather than your own folder in the sofs drive.
+
+4\. Navigate in Git bash to the location where you have copied the "PAM_analysis_packages" folder. The easiest way to do this is to navigate to the correct folder using Windows File Explorer, then right-click on the top banner and select "Copy address".
+
+![Figure 4: Copy the location of the "PAM_analysis_packages" folder.](./screenshots/screenshot_16.jpg)
+
+ Then, in Git bash, type "cd " (remember the space following "cd") and paste the path using *```Shift``` + ```Insert```*. This should result in the following command in the command line:
  
 ```
 cd C:\[path]\[to]\[your]\[folder]\PAM_analysis_packages
 ```
+Other commands which may be useful in navigating to your required directory include:
 
-5\. Now create a new Conda environment, using the "get_fvfm_env.yml" file, in the "scripts" directory of the PAM_analysis_packages folder. To do this, enter the following command:
-```
-conda env create --name get_fvfm --file=scripts/get_fvfm_env.yml python=3.9
-```
-### Step 2: Loading the Conda environment and running "get_fvfm_v1.py"
+- ```dir```: returns a list of all files and folders in your current directory
+- ```pwd```: returns the path to you current location
+- ``` cd ..```: move up one level in the path (into the parent directory)
 
-1\. In Anaconda Prompt, navigate to the PAM_analysis_packages folder, as described above.
+- Your current path location is also printed in yellow immediately above the command line. ```~``` (tilde) represents your home directory.
 
-2\. Load the "get_fvfm" environment using the following command:
-```
-conda activate get_fvfm
-```
- - The environment name in Anaconda Prompt should now change from ```(base)``` to ```(get_fvfm)```.
- 
-3\. Copy the .xpim files to be analysed into the "PAM_analysis_packages/input/xpim_files" directory.
+- When writing directory or file names, pressing ```Tab``` can auto complete the name of the folder/file. If several files share the prefix already typed, pressing ```Tab``` twice, will print the available options:
+
+![Figure 5: Use ```Tab``` to autocomplete directory/file names. Typing (for example) ```ls get_fvfm``` followed by pressing ```Tab``` twice returns the possible options (in the red box).](./screenshots/screenshot_17.jpg)
+
+3\. In Windows File Explorer, copy the .xpim files to be analysed into the "PAM_analysis_packages/input/xpim_files/" directory.
+
+- Note this directory is prepopulated with an example file "Plate1_3dpt.xpim". You can use this file to carry out a test run of the pipeline, or delete it if you want to analyse your own files.
 
 4\. Ensure that the following directories do not contain any files from previous analyses:
 
  - "PAM_analysis_packages/debug/cropped_images"
- - "PAM_analysis_packages/input/tiff_files" and its subdirectory "tiff_frames"
+ - "PAM_analysis_packages/input/tiff_files" (this folder may also contain a subdirectory "tiff_frames", if the pipeline has already been run)
  - "PAM_analysis_packages/output" and its subdirectory "threshold_output"
  - "PAM_analysis_packages/Plant_area_data" and its subdirectory "debug"
 
-5\. To run the "get_fvfm_v1.py" script, enter the following command into Anaconda Prompt:
+5\. To run the "get_fvfm_v2.py" script, enter the following command into Git Bash:
 ```
-python get_fvfm_v1.py
+python get_fvfm_v2.py
 ```
 
- - Whilst the script is running, it will print the calculated FvFm values to the screen of Anaconda Prompt. It will also print the name of each plate image that is analysed and the total number of images analysed as part of the script. In addition, if the script finds anything unusual (e.g. records already present in the folders above which should be empty) then it will print a warning message.
- - Note: I have now added an additional python file to the folder “get_fvfm_black_plates_v1.py”. This file is to be used for analysis of images using the black cell culture plates provided by Sarstaedt (prod. No.: 94.6000.014).
+- At time of writing, v2 is the most up-to-date version of the script to extract FvFm data.
+
+ - Whilst the script is running, it will print the calculated FvFm values to Git Bash. It will also print the name of each plate image that is analysed and the total number of images analysed as part of the script. In addition, if the script finds anything unusual (e.g. records already present in the folders above which should be empty) then it will print a warning message.
+ - Note: An additional python file in the folder “get_fvfm_black_plates_v2.py” is to be used for analysis of images generated using the black cell culture plates provided by Sarstaedt (prod. No.: 94.6000.014).
  
-6\. Once the script has finished running (message printed: ```End of script. Number of files analysed: [...]```) check the output folder. 
+6\. Once the script has finished running (message printed: ```End of script. Number of files analysed: [...]```) check the output folder:
 
- - A file "FvFm_output.csv" should be present, which contains the Y(II) values of all the .xpim files.
- - In the "threshold_output" folder there should be a series of contrast images for each of your plates. These can be used to generate the plant area data...
+![Figure 6: Example output from "get_fvfm_v2.py" script. Note that an error message warning about future deprecation exists. This does not affect the output, and an update is currently in progress to remove this error.).](./screenshots/screenshot_19.jpg)
+
+ - A file "output/FvFm_output.csv" should now be present, which contains the Y(II) values of all the .xpim files.
+ - In the "threshold_output" folder there should be a series of contrast images for each of your plates. These will be used to generate the plant area data...
 
 
-## Extract area data from "Contrast" images
+### Step 3: Extract plant area data from "Contrast" images
 
-Plant area data will be extracted from contrast images using ImageJ and the "macro" file **"Contrast_area_quant_directory.txt"**
+Plant area data will be extracted from contrast images using ImageJ and the "macro" file **"Contrast_area_quant_directory_v2.txt"**
  - Note: I have now added an additional ImageJ macro file to the folder “Contrast_area_quant_black_plates_v2.txt”. This file is to be used for analysis of images using the black cell culture plates provided by Sarstaedt (prod. No.: 94.6000.014).
 
 1\. Open the Contrast_area_quant_directory.txt file. On lines 4 and 7 there are the following commands:
@@ -127,44 +169,53 @@ input = '\\\\sofs2.uni-koeln.de\\agzuccaro\\PAM_analysis_pipeline\\PAM_analysis_
 ```
 output = '\\\\sofs2.uni-koeln.de\\agzuccaro\\PAM_analysis_pipeline\\PAM_analysis_packages\\Plant_area_data\\'
 ```
- - Note that the directory names are formatted strangely, with double or quadruple backslashes ("\\\\"): As the script interpreter defines backslash as having a special meaning, it is necessary to add additional backslashes to override this.
+ - Note: the double or quadruple backslashes ("\\\\") are necessary for ImageJ to correctly read the directory path. In Java script (the language used by ImageJ) characters sometimes have special functions, other than just as text or symbols. A backslash is used to denote that the following character does _not_ have a special function. In this case, when the text string is printed, the first backslash is hidden. The second backslash is then interpreted as a regular backslash and so is shown. For this reason, the doulbe backslash is necessary for the correct reading of the directory path.
  
-Edit the input and output paths to match your target directory. The input directory should be the "threshold_output" directory within your copy of the PAM_analysis_packages folder. The output directory can be the "Plant_area_data" folder, in your copy of the PAM_analysis_packages folder. As above, the easiest way to get these paths is to navigate to the correct folder using Windows File Explorer, then right click on the top banner and select "Copy address as text". Please note that it is necessary to **add additional backslashes to the path name**, once copied into the Contrast_area_quant_directory.txt file. For example:
+ - Note also that backslashes appear *at the end of the path*. This denotes that the location (e.g. "threshold_output") is a folder and not a file. This is essential for the correct running of the script.
+ 
+Edit the input and output paths to match your "PAM_analysis_packages" directory. The input directory should be the "output/threshold_output/" subdirectory, whilst the output directory must be the "Plant_area_data/" subdirectory. As above, the easiest way to get these paths is to use Windows File Explorer, then right-click on the top banner and select "Copy address". Then use *```Shift``` + ```Insert```* in Git Bash (after "cd ") to print the path to the comand line. For example:
 ```
 input = C:\\[path]\\[to]\\[your]\\[folder]\\PAM_analysis_packages\\output\\threshold_output\\
 ```
 
-2\. Once you have edited your version of the Contrast_area_quant_directory.txt file with the correct input and output locations, save and close the file. 
+2\. Once you have edited your version of the Contrast_area_quant_directory_v2.txt file with the correct input and output locations, save and close the file. 
 
 3\. Open ImageJ. Select "Plugins > Macros > Run... "
 
-![](./screenshots/Screenshot_10.jpg)
+![Figure 7: Method for running Macro files in ImageJ](./screenshots/Screenshot_10.jpg)
 
-- Navigate to your PAM_analysis_packages folder and select "Contrast_area_quant_directory.txt".
+- Navigate to your PAM_analysis_packages folder and select "Contrast_area_quant_directory_v2.txt".
 
-- A number of windows should open up. Four windows show the results from the analysis. This data is also saved in the ouput directory, so they can be closed (I am yet to find a way of closing them automatically).
+- A number of windows will open up. Four windows show the results from the analysis. 
 
 - An additional window named "Log" will also be generated:
 
-!["Example contents of the 'Log' window"](./screenshots/Screenshot_11.jpg)
+![Figure 8: Example contents of the ImageJ 'Log' window](./screenshots/Screenshot_11.jpg)
 
-- This file shows an overview of what the script has run, and should help with troubleshooting. The first two lines show the folder paths selected for the input and output files, as understood by the script. If you have trouble with running the script, check these lines to make sure the path names are being read correctly. The following lines in the Log file display which files have been analysed by the script. If 1) files of other formats (e.g. .csv files) or 2) other folders are present within the input directory, additional lines in the log will identify that they have been detected (but not processed). Again, hopefully this will help with troubleshooting.
+- This file shows an overview of what the script has run, and should help with troubleshooting. The first two lines show the folder paths selected for the input and output files, as understood by the script. If you have trouble with running the script, check these lines to make sure the path names are being read correctly (and reflect the true path to your required folders). The following lines in the Log file display which files have been analysed by the script. If 1) files of other formats (e.g. .csv files) or 2) other folders are present within the input directory, additional lines in the log will identify that they have been detected (but not processed).
 
-- In your output directory a .csv files should now be present for each contrast image analysed. Additionally, in the "debug" folder, there should be a .jpg image of the contrast image with the areas analysed using the _"Analyse particles"_ ImageJ function have been collected. If you encounter unusual results during your analysis, or want to check that the images are being processed correctly, you can look in these files.
+All necessary data also saved to the ouput directory, so ImageJ windows can be closed once the script has finished running. The easiest way to do this is to right-click on the ImageJ icon at the bottom of the screen and select "Close all windows".
 
-### Combining Y(II) with Total Area data
+- In your output directory a .csv files should now be present for each contrast image analysed. Additionally, in the "debug" folder, there should be a .jpg image of the contrast image with the areas analysed using the _"Analyse particles"_ ImageJ function have been collected. **Please check the images in this debug file!** If you encounter unusual results during your analysis, it may be due to the incorrect positioning of a plate in the image. Plates which are not correctly positioned will have to be manually processed.
 
-To collect your Y(II) data in a csv file along with the plant area generated using the ImageJ macro, run the **"combine_data.py"** script. In Anaconda Prompt, enter the following command:
+### Step 4: Combining Y(II) with Total Area data
+
+To combine the FvFm data in a .csv file together with the plant area generated using the ImageJ macro, run the **"combine_data.py"** script. In Git Bash, enter the following command:
 ```
 python combine_data.py
 ```
-In the "output" folder, a file named "Combined_output.csv" should now be present. This csv file should have four columns:
+
+- Note: The same error is outputted as for the "get_fvfm_v2.py" script. Again, this does not affect the results, and will be removed in future versions.
+
+In the "output" folder, a file named "Combined_output.csv" should now be present. This csv file should has five columns:
 
  - **Plate**: The name given of the plate analysed
  - **Well**: The number of the well analysed (see image below for well numbering system)
  - **Total Area**: The plant area output from ImageJ of the well
- - **FvFm**: The Y(II) value for the plants in the well
- 
- Update (September 2023): A fifth column "Area_FvFm" has been included, which is the Total Area score x FvFm score.
+ - **FvFm**: The FvFm value for the plants in the well
+ - **Area_FvFm**: The plant area score x FvFm score.
 
-![Numbering of wells in 24-well plates](./screenshots/Screenshot_13.jpg)
+![Figure 9: Numbering of wells in 24-well plates](./screenshots/Screenshot_13.jpg)
+
+This "Combined_output.csv" file can now be used for data analysis.
+
