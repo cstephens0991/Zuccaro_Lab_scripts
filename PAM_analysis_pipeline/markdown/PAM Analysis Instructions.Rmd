@@ -157,42 +157,30 @@ python get_fvfm_v2.py
 
 ### Step 3: Extract plant area data from "Contrast" images
 
-Plant area data will be extracted from contrast images using ImageJ and the "macro" file **"Contrast_area_quant_directory_v2.txt"**
- - Note: I have now added an additional ImageJ macro file to the folder “Contrast_area_quant_black_plates_v2.txt”. This file is to be used for analysis of images using the black cell culture plates provided by Sarstaedt (prod. No.: 94.6000.014).
+Plant area data will be extracted from contrast images using ImageJ and the "macro" file **"Contrast_area_quant_directory_v2.1.txt"**
+ - Note: An alternative ImageJ macro file exists called “Contrast_area_quant_black_plates_v2.txt”. This file is to be used for analysis of images using the black cell culture plates provided by Sarstaedt (prod. No.: 94.6000.014), as the well locations are different from standard plates.
 
-1\. Open the Contrast_area_quant_directory.txt file. On lines 4 and 7 there are the following commands:
+Open ImageJ. Select "Plugins > Macros > Run... ". Then navigate to the "PM_analysis_pipeline" folder in which you are processing image files.
 
-```
-input = '\\\\sofs2.uni-koeln.de\\agzuccaro\\PAM_analysis_pipeline\\PAM_analysis_packages\\output\\threshold_output\\'
-```
-...
-```
-output = '\\\\sofs2.uni-koeln.de\\agzuccaro\\PAM_analysis_pipeline\\PAM_analysis_packages\\Plant_area_data\\'
-```
- - Note: the double or quadruple backslashes ("\\\\") are necessary for ImageJ to correctly read the directory path. In Java script (the language used by ImageJ) characters sometimes have special functions, other than just as text or symbols. A backslash is used to denote that the following character does _not_ have a special function. In this case, when the text string is printed, the first backslash is hidden. The second backslash is then interpreted as a regular backslash and so is shown. For this reason, the doulbe backslash is necessary for the correct reading of the directory path.
- 
- - Note also that backslashes appear *at the end of the path*. This denotes that the location (e.g. "threshold_output") is a folder and not a file. This is essential for the correct running of the script.
- 
-Edit the input and output paths to match your "PAM_analysis_packages" directory. The input directory should be the "output/threshold_output/" subdirectory, whilst the output directory must be the "Plant_area_data/" subdirectory. As above, the easiest way to get these paths is to use Windows File Explorer, then right-click on the top banner and select "Copy address". Then use *```Shift``` + ```Insert```* in Git Bash (after "cd ") to print the path to the comand line. For example:
-```
-input = C:\\[path]\\[to]\\[your]\\[folder]\\PAM_analysis_packages\\output\\threshold_output\\
-```
-
-2\. Once you have edited your version of the Contrast_area_quant_directory_v2.txt file with the correct input and output locations, save and close the file. 
-
-3\. Open ImageJ. Select "Plugins > Macros > Run... "
 
 ![Figure 7: Method for running Macro files in ImageJ](./screenshots/Screenshot_10.jpg)
 
+
 - Navigate to your PAM_analysis_packages folder and select "Contrast_area_quant_directory_v2.txt".
 
-- A number of windows will open up. Four windows show the results from the analysis. 
+ - Note: ImageJ will open the file explorer at the *last location in which a macro was run*. If you are using this package repeatedly, this will be in the folder copied the previous time you ran the pipeline. I would suggest navigating up to near the head of your file system (e.g. "Documents"), to ensure the correct folder location is selected.
+ 
+ - Note: This macro (and older iterations) require ImagJ 1.53e and Java 1.8.0 to run correctly. You can check your version of ImageJ/Java by opening ImageJ and right-clicking on the bottom banner:
+ 
+ ![Figure 8: Right-clicking the bottom banner of ImageJ will provide the version of ImageJ and Java installed.](./screenshots/screenshot_20.jpg)
+
+- When the script is running correctly, a number of windows will open up. Four windows show the results from the analysis. 
 
 - An additional window named "Log" will also be generated:
 
-![Figure 8: Example contents of the ImageJ 'Log' window](./screenshots/Screenshot_11.jpg)
+![Figure 9: Example contents of the ImageJ 'Log' window](./screenshots/Screenshot_11.jpg)
 
-- This file shows an overview of what the script has run, and should help with troubleshooting. The first two lines show the folder paths selected for the input and output files, as understood by the script. If you have trouble with running the script, check these lines to make sure the path names are being read correctly (and reflect the true path to your required folders). The following lines in the Log file display which files have been analysed by the script. If 1) files of other formats (e.g. .csv files) or 2) other folders are present within the input directory, additional lines in the log will identify that they have been detected (but not processed).
+- This file shows an overview of what the script has run, and should help with any troubleshooting. The first two lines show the folder paths selected for the input and output files, as understood by the script. If you have trouble with running the script, check these lines to make sure the path names are being read correctly (and reflect the true path to your required folders). The following lines in the Log file display which files have been analysed by the script. If 1) files of other formats (e.g. .csv files) or 2) other folders are present within the input directory, additional lines in the log will identify that they have been detected (but not processed).
 
 All necessary data also saved to the ouput directory, so ImageJ windows can be closed once the script has finished running. The easiest way to do this is to right-click on the ImageJ icon at the bottom of the screen and select "Close all windows".
 
@@ -215,7 +203,7 @@ In the "output" folder, a file named "Combined_output.csv" should now be present
  - **FvFm**: The FvFm value for the plants in the well
  - **Area_FvFm**: The plant area score x FvFm score.
 
-![Figure 9: Numbering of wells in 24-well plates](./screenshots/Screenshot_13.jpg)
+![Figure 10: Numbering of wells in 24-well plates](./screenshots/Screenshot_13.jpg)
 
 This "Combined_output.csv" file can now be used for data analysis.
 
