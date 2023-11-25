@@ -1,0 +1,26 @@
+### Step 3: Extract plant area data from "Contrast" images
+
+Plant area data will be extracted from contrast images using ImageJ and the "macro" file **"Contrast_area_quant_directory_v2.txt"**
+ - Note: I have now added an additional ImageJ macro file to the folder “Contrast_area_quant_black_plates_v2.txt”. This file is to be used for analysis of images using the black cell culture plates provided by Sarstaedt (prod. No.: 94.6000.014).
+
+1\. Open the Contrast_area_quant_directory.txt file. On lines 4 and 7 there are the following commands:
+
+```
+input = '\\\\sofs2.uni-koeln.de\\agzuccaro\\PAM_analysis_pipeline\\PAM_analysis_packages\\output\\threshold_output\\'
+```
+...
+```
+output = '\\\\sofs2.uni-koeln.de\\agzuccaro\\PAM_analysis_pipeline\\PAM_analysis_packages\\Plant_area_data\\'
+```
+ - Note: the double or quadruple backslashes ("\\\\") are necessary for ImageJ to correctly read the directory path. In Java script (the language used by ImageJ) characters sometimes have special functions, other than just as text or symbols. A backslash is used to denote that the following character does _not_ have a special function. In this case, when the text string is printed, the first backslash is hidden. The second backslash is then interpreted as a regular backslash and so is shown. For this reason, the doulbe backslash is necessary for the correct reading of the directory path.
+ 
+ - Note also that backslashes appear *at the end of the path*. This denotes that the location (e.g. "threshold_output") is a folder and not a file. This is essential for the correct running of the script.
+ 
+Edit the input and output paths to match your "PAM_analysis_packages" directory. The input directory should be the "output/threshold_output/" subdirectory, whilst the output directory must be the "Plant_area_data/" subdirectory. As above, the easiest way to get these paths is to use Windows File Explorer, then right-click on the top banner and select "Copy address". Then use *```Shift``` + ```Insert```* in Git Bash (after "cd ") to print the path to the comand line. For example:
+```
+input = C:\\[path]\\[to]\\[your]\\[folder]\\PAM_analysis_packages\\output\\threshold_output\\
+```
+
+2\. Once you have edited your version of the Contrast_area_quant_directory_v2.txt file with the correct input and output locations, save and close the file. 
+
+3\. Open ImageJ. Select "Plugins > Macros > Run... "
